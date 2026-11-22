@@ -1,0 +1,9 @@
+*
+!Dockerfile
+!sql/
+!sql/**
+!scripts/
+!scripts/**
+!formation/
+!formation/**
+**/__pycache__

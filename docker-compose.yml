@@ -1,0 +1,16 @@
+services:
+  sqlite:
+    build: .
+    image: sqlite-formation:local
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - donnees:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/', timeout=3).close()"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+      start_period: 5s
+volumes:
+  donnees:
