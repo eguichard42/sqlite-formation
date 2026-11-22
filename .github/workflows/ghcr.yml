@@ -1,0 +1,59 @@
+name: Valider et publier sur GHCR
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Démarrer le conteneur
+        run: docker compose up --build --wait
+      - name: Vérifier HTTP, SQL et la maintenance
+        run: |
+          curl --fail --silent --show-error http://localhost:8080/ > /dev/null
+          docker compose exec -T sqlite /app/scripts/admin.sh integrite
+          docker compose exec -T sqlite /app/scripts/validation.sh
+      - name: Afficher les journaux en cas d’échec
+        if: failure()
+        run: docker compose logs
+      - name: Nettoyer l’environnement de test
+        if: always()
+        run: docker compose down --volumes
+
+  publication:
+    if: github.event_name == 'push'
+    needs: validation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Construire et publier l’image
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          image="ghcr.io/${OWNER,,}/sqlite-formation"
+          case "$GITHUB_REF" in
+            refs/heads/main) tag=latest ;;
+            refs/tags/v*) tag="$GITHUB_REF_NAME" ;;
+            *) exit 1 ;;
+          esac
+          docker build --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" -t "$image:$tag" .
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+          docker push "$image:$tag"
