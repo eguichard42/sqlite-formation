@@ -6,7 +6,7 @@ dossier=${FORMATION_SAUVEGARDES:-/data/sauvegardes}
 racine=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 
 cli() {
-    sqlite3 -batch -bail -init /dev/null -cmd '.timeout 5000' -cmd 'PRAGMA foreign_keys=ON;' "$@"
+    sqlite3 -batch -bail -init "$racine/scripts/sqlite.rc" "$@"
 }
 erreur() {
     printf '%s\n' "$*" >&2

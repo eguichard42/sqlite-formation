@@ -10,7 +10,7 @@ db="$temp/formation.db"
 export FORMATION_DB="$db" FORMATION_SAUVEGARDES="$temp/sauvegardes"
 
 cli() {
-    sqlite3 -batch -bail -init /dev/null -cmd 'PRAGMA foreign_keys=ON;' "$db" "$@"
+    sqlite3 -batch -bail -init "$racine/scripts/sqlite.rc" "$db" "$@"
 }
 admin() {
     "$racine/scripts/admin.sh" "$@"

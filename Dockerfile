@@ -15,11 +15,11 @@ RUN ldconfig \
     && sqlite3 --version \
     && python -c "import sqlite3; assert sqlite3.sqlite_version == '3.54.1', sqlite3.sqlite_version" \
     && groupadd --gid 10001 formation && useradd --uid 10001 --gid 10001 --create-home formation \
-    && install -d -o formation -g formation /data /data/sauvegardes \
-    && printf 'PRAGMA foreign_keys = ON;\n.timeout 5000\n' > /home/formation/.sqliterc
+    && install -d -o formation -g formation /data /data/sauvegardes
 WORKDIR /app
 COPY sql ./sql
 COPY scripts ./scripts
+COPY scripts/sqlite.rc /home/formation/.sqliterc
 COPY formation ./formation
 USER formation
 EXPOSE 8080
